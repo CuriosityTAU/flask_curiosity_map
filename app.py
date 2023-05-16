@@ -13,4 +13,4 @@ def home():
 if __name__ == '__main__':
     app.run(host='0.0.0.0', ssl_context=('../CuriosityMap/vrobotator_tau_ac_il_cert.cer',
                                          '../CuriosityMap/vrobotator_tau_ac_il_private.key'),
-            debug=True, port=3000)
+            port=3000)
