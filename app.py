@@ -1,16 +1,10 @@
-from flask import Flask
+from flask import Flask, render_template
 
 app = Flask(__name__)
 
-@app.route('/hello/')
-def hello():
-    return "Hello, World!"
-
 @app.route('/')
 def home():
-    return "Hello, World!"
+    return render_template('index.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', ssl_context=('../CuriosityMap/vrobotator_tau_ac_il_cert.cer',
-                                         '../CuriosityMap/vrobotator_tau_ac_il_private.key'),
-            port=3000)
+    app.run(debug=True)

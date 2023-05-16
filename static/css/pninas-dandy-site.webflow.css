@@ -1,0 +1,227 @@
+.container {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  padding-top: 50px;
+  padding-bottom: 97px;
+}
+
+.hero-without-image {
+  -webkit-text-fill-color: inherit;
+  background-color: rgba(15, 53, 90, .85);
+  background-clip: border-box;
+  border-bottom: 1px solid rgba(0, 0, 0, 0);
+  margin-top: 50px;
+  padding: 70px 30px 20px;
+  position: relative;
+}
+
+.container-2 {
+  width: 100%;
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-wrapper-two {
+  max-width: 750px;
+  text-align: center;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+}
+
+.margin-bottom-24px {
+  color: #f7eeee;
+  margin-bottom: 24px;
+}
+
+.button-primary {
+  color: #fff;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  background-color: #1a1b1f;
+  flex-direction: column-reverse;
+  align-self: center;
+  align-items: flex-end;
+  padding: 12px 25px;
+  font-size: 12px;
+  line-height: 20px;
+  transition: all .2s;
+  display: flex;
+}
+
+.button-primary:hover {
+  color: #fff;
+  background-color: #32343a;
+}
+
+.button-primary:active {
+  background-color: #43464d;
+}
+
+.button {
+  width: 170px;
+  opacity: 1;
+  text-align: center;
+  mix-blend-mode: normal;
+  background-color: #cc8a7c;
+  border: 1px #090808;
+  border-radius: 19px;
+  margin-left: 10px;
+  margin-right: 10px;
+  padding: 20px;
+  transform: translate(0);
+  box-shadow: 0 4px 5px #000;
+}
+
+.section {
+  opacity: 1;
+  background-color: rgba(12, 57, 91, .9);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 0;
+  padding-top: 40px;
+  padding-bottom: 50px;
+  display: flex;
+}
+
+.body {
+  -webkit-text-fill-color: inherit;
+  background-color: #fff;
+  background-image: linear-gradient(rgba(31, 28, 28, 0), rgba(31, 28, 28, 0)), url('../images/background-image.jpg');
+  background-position: 0 0, 0 0;
+  background-repeat: repeat, no-repeat;
+  background-size: auto, cover;
+  background-attachment: scroll, scroll;
+  background-clip: border-box;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, .2);
+}
+
+.heading {
+  font-size: 20px;
+}
+
+.column {
+  justify-content: center;
+  padding-left: 187px;
+  display: flex;
+}
+
+.column-2 {
+  justify-content: flex-start;
+  padding-top: 40px;
+  padding-bottom: 40px;
+  display: flex;
+}
+
+.button-2 {
+  width: 160px;
+  height: 70px;
+  text-align: center;
+  align-self: center;
+  padding-top: 0;
+  padding-bottom: 0;
+  position: relative;
+}
+
+.button-3 {
+  width: 240px;
+  height: auto;
+  text-align: center;
+  background-color: #c75b44;
+  border-radius: 17px;
+  flex-flow: row;
+  align-content: center;
+  justify-content: center;
+  align-items: flex-end;
+  margin-left: 20px;
+  padding: 20px;
+  display: flex;
+  position: relative;
+  left: -22px;
+  right: 12px;
+  box-shadow: 0 8px 5px rgba(0, 0, 0, .53);
+}
+
+.column-3 {
+  justify-content: center;
+  padding-right: 5px;
+  display: flex;
+  right: -13px;
+}
+
+.heading-2 {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, .48);
+  padding-top: 50px;
+}
+
+.heading-3 {
+  color: #f3e1e1;
+  margin-bottom: 20px;
+  padding-bottom: 30px;
+  font-size: 80px;
+  box-shadow: 0 12px 5px rgba(0, 0, 0, .2);
+}
+
+.text-span, .bold-text {
+  padding-right: 5px;
+}
+
+@media screen and (max-width: 991px) {
+  .container-2 {
+    max-width: 728px;
+  }
+
+  .button {
+    width: 100px;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .hero-without-image {
+    padding: 60px 15px;
+  }
+}
+
+@media screen and (max-width: 479px) {
+  .container {
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  .hero-without-image {
+    margin-top: 0;
+    padding-top: 20px;
+    padding-bottom: 10px;
+  }
+
+  .container-2 {
+    max-width: none;
+  }
+
+  .button {
+    margin-bottom: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .section {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .button-3 {
+    width: 150px;
+    margin-bottom: 20px;
+    left: -10px;
+    right: 27px;
+  }
+
+  .heading-3 {
+    font-size: 40px;
+  }
+}
