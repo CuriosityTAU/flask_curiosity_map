@@ -1,0 +1,12 @@
+How to activate the website:
+    1) activate the virtual environment: myenv\Scripts\activate
+    2) assign the flask app: set FLASK_APP=app.py
+    3) run the flask app: flask run 
+    4) activate nginx: navigate to the nginx folder and type in the terminal: nginx 
+
+Helpful information:
+    1) If the flask app isnt running- remember to activate the venv or try installing flask again 
+    2) If the website isn't updating with changes made- in the nginx terminal run the command: nginx -s reload 
+    3) to quit the app in nginx terminal write: nginx -s quit 
+    4) if the app isn't stopping- go to task manager, locate the PID, and run the command (in any terminal): taskkill /F /PID 14312 (replace 14312 with PID)
+
