@@ -29,5 +29,6 @@ def handle_exception(e):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # the default port is 5000. to use the port specified here run the command 'flask run --port 3000' OR 'python app.py'
+    app.run(host='0.0.0.0', port=3000, debug=False)
 
