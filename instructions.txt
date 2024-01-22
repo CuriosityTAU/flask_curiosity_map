@@ -1,12 +1,38 @@
 How to activate the website:
-    1) activate the virtual environment: myenv\Scripts\activate
-    2) assign the flask app: set FLASK_APP=app.py
-    3) run the flask app: flask run 
-    4) activate nginx: navigate to the nginx folder and type in the terminal: nginx 
+    1) Activate the virtual environment: 
+        - Windows: venv\Scripts\activate 
+        - Linux: source venv/bin/activate
+    2) Assign the flask app: set FLASK_APP=app.py
+    3) Run the flask app: flask run 
+    ##### with windows stop here bacause local production is being done without nginx #################
+        To make sure the app is running on linux: curl http://localhost:5000 (should see the html page contents)
+    4) Activate nginx: navigate to the nginx folder (cd /etc/nginx) and type in the terminal: 
+        - Windows: nginx 
+        - Linux: sudo service nginx start (or nginx restart)
+        For linux check the status to make sure its running: sudo systemctl status nginx
 
 Helpful information:
     1) If the flask app isnt running- remember to activate the venv or try installing flask again 
-    2) If the website isn't updating with changes made- in the nginx terminal run the command: nginx -s reload 
-    3) to quit the app in nginx terminal write: nginx -s quit 
-    4) if the app isn't stopping- go to task manager, locate the PID, and run the command (in any terminal): taskkill /F /PID 14312 (replace 14312 with PID)
+    2) If the website isn't updating with changes made- in the nginx terminal run the command: Windows: nginx -s reload Linux: sudo service nginx restart
+    3) To quit the app in nginx terminal write: Windows: nginx -s quit Linux: sudo systemctl stop nginx
+    4) if the app isn't stopping:
+        - Windows: go to task manager, locate the PID, and run the command (in any terminal): taskkill /F /PID 14312 (replace 14312 with PID)
+        - Linux: locate pid with: pgrep nginx, then stop with: sudo kill <nginx-pid>
+
+
+Things to pay attention to in production: 
+    1) Change nginx configuration files when uploading to the server
+    2) "database connection strings, secret keys, or API keys should be stored as environment variables" (in the app.py file)- ChatGPT
+    3) When you create a database- save database connection as an environment variable (and any other assignments necessary, ask gpt :)
+    4) 
+
+
+
+
+
+Not sure how helpful it is information:
+    1) sites-available: folder that has the conf files of all the websites nginx has acces to 
+       sites-enabled: folder (similar to available) but this one is responsible for the live websites (links to the 'available folder' to know which virtual hosts are activated).
+
+
 

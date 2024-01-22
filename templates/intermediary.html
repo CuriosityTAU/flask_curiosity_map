@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Intermediary Page</title>
+    <script>
+        window.onload = function() {
+            const loginID = sessionStorage.getItem("loginID")
+            const responseID = '{{ response_id }}';
+            const q_type = '{{ q_type }}';
+            const child_id = '{{ child_id }}';
+            console.log(q_type)
+            if (loginID && responseID) {
+                if (q_type=='child'){
+                    window.location.href = `/child_q_complete?loginID=${encodeURIComponent(loginID)}&responseId=${encodeURIComponent(responseID)}&childID=${encodeURIComponent(child_id)}`;
+                }
+                else{
+                    window.location.href = `/self_q_complete?loginID=${encodeURIComponent(loginID)}&responseId=${encodeURIComponent(responseID)}`;
+                }
+            } else {
+                // Handle error: Redirect to an error page or show a message
+                console.error('Missing loginID or responseID');
+            }
+        };
+    </script>
+</head>
+<body>
+    <p>Processing your response, please wait...</p>
+</body>
+</html>
