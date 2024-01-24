@@ -1,38 +1,53 @@
-How to activate the website:
-    1) Activate the virtual environment: 
-        - Windows: venv\Scripts\activate 
-        - Linux: source venv/bin/activate
-    2) Assign the flask app: set FLASK_APP=app.py
-    3) Run the flask app: flask run 
-    ##### with windows stop here bacause local production is being done without nginx #################
-        To make sure the app is running on linux: curl http://localhost:5000 (should see the html page contents)
-    4) Activate nginx: navigate to the nginx folder (cd /etc/nginx) and type in the terminal: 
-        - Windows: nginx 
-        - Linux: sudo service nginx start (or nginx restart)
-        For linux check the status to make sure its running: sudo systemctl status nginx
+Summary: Website Deployment and Configuration
 
-Helpful information:
-    1) If the flask app isnt running- remember to activate the venv or try installing flask again 
-    2) If the website isn't updating with changes made- in the nginx terminal run the command: Windows: nginx -s reload Linux: sudo service nginx restart
-    3) To quit the app in nginx terminal write: Windows: nginx -s quit Linux: sudo systemctl stop nginx
-    4) if the app isn't stopping:
-        - Windows: go to task manager, locate the PID, and run the command (in any terminal): taskkill /F /PID 14312 (replace 14312 with PID)
-        - Linux: locate pid with: pgrep nginx, then stop with: sudo kill <nginx-pid>
+1. Website Overview and Directory Structure
 
+Flask Application:
+  - Located in `/a/home/cc/enginer/gorengor/curiositymap/flask_curiosity_map`.
+  - Contains the Flask app (`app.py`), static resources (`static/`), templates (`templates/`), and other related files.
+  - Uses a virtual environment (`venv/`) for Python dependencies, ensuring isolation from other Python projects.
 
-Things to pay attention to in production: 
-    1) Change nginx configuration files when uploading to the server
-    2) "database connection strings, secret keys, or API keys should be stored as environment variables" (in the app.py file)- ChatGPT
-    3) When you create a database- save database connection as an environment variable (and any other assignments necessary, ask gpt :)
-    4) 
+Gunicorn:
+  - Serves the Flask application, acting as a WSGI server.
+  - Managed as a systemd service (`/etc/systemd/system/flask-curiositymap-gunicorn.service`), allowing it to start automatically and be controlled easily.
+  - Configured to listen on `0.0.0.0:3000`, making the Flask app accessible on this address and port.
 
+Nginx:
+  - Acts as a reverse proxy, forwarding requests from clients to the Gunicorn server.
+  - Main configuration file located at `/etc/nginx/nginx.conf`.
+  - Site-specific configurations stored in `/etc/nginx/sites-available` and symlinked to `/etc/nginx/sites-enabled` for activation.
+  - The configuration for the website is in `sites-available/CuriosityMap_nginx.conf` (symlinked in `sites-enabled`), specifying how to handle incoming requests and proxy them to Gunicorn.
 
+2. Configuration Files
 
+Nginx Main Configuration (`nginx.conf`):
+  - Located at `/etc/nginx/nginx.conf`.
+  - Contains global settings for Nginx and includes the `sites-enabled` directory to load site-specific configurations.
 
+Website Nginx Configuration (`CuriosityMap_nginx.conf`):
+  - Located in `/etc/nginx/sites-available/CuriosityMap_nginx.conf` and symlinked to `/etc/nginx/sites-enabled`.
+  - Configures Nginx to serve the Flask application on the domain `vrobotator.tau.ac.il`.
+  - Includes settings for listening on ports 80 (HTTP) and 443 (HTTPS, if SSL is configured), proxying requests to `localhost:3000` (where Gunicorn serves the Flask app).
 
-Not sure how helpful it is information:
-    1) sites-available: folder that has the conf files of all the websites nginx has acces to 
-       sites-enabled: folder (similar to available) but this one is responsible for the live websites (links to the 'available folder' to know which virtual hosts are activated).
+3. Flask Run Script (`run_flask.sh`)
+
+Purpose: Simplifies the process of restarting the Flask application and Nginx after updates.
+Commands:
+  - `systemctl stop flask-curiositymap-gunicorn.service`: Stops the Gunicorn service.
+  - `systemctl daemon-reload`: Reloads the systemd daemon to apply any changes to service files.
+  - `systemctl start flask-curiositymap-gunicorn.service`: Starts the Gunicorn service, launching the Flask app.
+  - `systemctl reload nginx`: Reloads Nginx to apply configuration changes.
+  - `systemctl status nginx`: (Optional) Checks the status of Nginx for debugging.
+  - `systemctl status flask-curiositymap-gunicorn.service`: (Optional) Checks the status of the Gunicorn service.
+
+4. Additional Information
+
+- Virtual Environment: The Flask app uses a Python virtual environment (`venv/`) for dependency management. It's crucial to activate this environment when performing tasks like installing new packages or running the Flask app directly (does not need to be activated every time, the gunicorn service file handles this).
+- Gunicorn Systemd Service: This service file (`flask-curiositymap-gunicorn.service`) should be updated if there are changes to the Flask app's location, the virtual environment, or Gunicorn's configuration.
+- Nginx Configuration: Changes to domain, SSL certificates, or proxy settings should be made in the `CuriosityMap_nginx.conf` file. After changes, Nginx should be reloaded.
+- Maintenance and Updates: Regular updates to the Flask app, Gunicorn, Nginx, and system packages are recommended for security and performance.
+- Logs: Check Nginx logs (`/var/log/nginx/error.log`) and Flask app logs (`flask_error.log` in the app directory) for troubleshooting.
+
 
 
 
