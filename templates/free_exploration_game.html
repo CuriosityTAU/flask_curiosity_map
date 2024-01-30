@@ -1,0 +1,95 @@
+<!-- go to cmd navigate to the game folder and run: python -m http.server -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Phaser Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <style>
+        #testContainer {
+            display: none; /* Hidden initially */
+            /* Add more styles as needed */
+        }
+        .question {
+            margin-bottom: 20px;
+        }
+        #testContainer {
+            display: none; /* Hidden initially */
+            position: fixed; /* Fixed position relative to the viewport */
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 600px;
+            width: 80%;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            text-align: center;
+            /* Added z-index to ensure the container is above all other content */
+            z-index: 1000;
+        }
+
+        .question p {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .question label {
+            font-size: 1em;
+            display: block;
+            text-align: left;
+            margin: 5px 0;
+        }
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        .answerLabel {
+            padding: 5px;
+            display: block;
+            margin: 5px 0;
+            transition: background-color 0.5s; /* Smooth transition for background color */
+        }
+    </style>
+</head>
+<body>
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
+    
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAza324Eb7iCiiiFVL2zepofs8-tSzZPr8",
+            authDomain: "free-exploration.firebaseapp.com",
+            projectId: "free-exploration",
+            storageBucket: "free-exploration.appspot.com",
+            messagingSenderId: "957737612993",
+            appId: "1:957737612993:web:f4bf57d168bd507db10640",
+            measurementId: "G-BPPMG3Q77P"
+        };
+        
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+    
+        // Export Firestore functions for use in other scripts
+        window.app = app;
+        window.getFirestore = getFirestore;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.serverTimestamp = serverTimestamp;
+    </script>
+    <script type="text/javascript">
+        window.assetsBaseUrl = "{{ url_for('static', filename='FreeExplorationGame/assets/') }}";
+    </script>    
+    <script src="{{ url_for('static', filename='FreeExplorationGame/js/english.js') }}" type="text/javascript"></script>
+    <script src="{{ url_for('static', filename='FreeExplorationGame/js/game.js') }}" type="text/javascript"></script>
+
+    <div id="testContainer">
+        <!-- Questionnaire will be populated here -->
+    </div>
+</body>
+</html>

@@ -384,6 +384,11 @@ def update_teacher_email():
         return jsonify({'success': True})
     return jsonify({'success': False})
 
+@app.route('/free_exploration_game')
+def free_exploration_game():
+    return render_template('free_exploration_game.html')
+
+
 # Handle uncaught exceptions
 @app.errorhandler(Exception)
 def handle_exception(e):
