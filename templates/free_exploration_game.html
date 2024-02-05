@@ -53,6 +53,48 @@
             margin: 5px 0;
             transition: background-color 0.5s; /* Smooth transition for background color */
         }
+        #openingScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        #openingText {
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+            margin: 0 0 20px 0;
+            font-size: 1.5em;
+            max-width: 600px;
+            color: #333;
+            font-weight: bold;
+        }
+        #explanation {
+            font-family: Arial, Helvetica, sans-serif;
+            text-align: center;
+            font-size: 1.1em;
+            max-width: 600px;
+            color: #333;
+        }
+        #startButton {
+            background-color: purple;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 15vw;
+            height: 15vw;
+            min-width: 150px;
+            min-height: 150px;
+            max-width: 200px;
+            max-height: 200px;
+            font-size: 2em;
+            cursor: pointer;
+            outline: none; /* Added to remove the outline on focus for aesthetics */
+        }
+
     </style>
 </head>
 <body>
@@ -84,10 +126,11 @@
         window.updateDoc= updateDoc;
 
     </script>  
-    
-    <div id="openingScreen" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #f0f0f0; padding: 20px; box-sizing: border-box;">
-        <p id="openingText" style="text-align: center; margin: 0 0 20px 0; font-size: 1.5em; max-width: 600px; color: #333; font-weight: bold;"></p>
-        <button id="startButton" style="background-color: purple; color: white; border: none; border-radius: 50%; width: 15vw; height: 15vw; min-width: 150px; min-height: 150px; max-width: 200px; max-height: 200px; font-size: 2em; cursor: pointer;">START</button>
+
+    <div id="openingScreen">
+        <p id="openingText"></p>
+        <div id="explanation"></div>
+        <button id="startButton">START</button>
     </div>
 
     
@@ -98,18 +141,34 @@
         window.researchName = "{{ research }}"; // find the relevant research to store properly in firebase DB 
         window.childId = "{{ child_id }}"; // get the child_id of the child playing the game (should be sent through parents_homepage() function in app.py)
 
+        // This function will create paragraph elements from text separated by periods
+        function createParagraphsFromText(text) {
+            const sentences = text.split('. ');
+            const fragment = document.createDocumentFragment();
+            sentences.forEach(sentence => {
+                const p = document.createElement('p');
+                p.textContent = sentence;
+                fragment.appendChild(p);
+            });
+            return fragment;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const researchName = window.researchName; // Already defined in your existing script
             const openingText = document.getElementById('openingText');
+            const explanation = document.getElementById('explanation');
             const startButton = document.getElementById('startButton');
             const openingScreen = document.getElementById('openingScreen');
 
-            // Update instruction text based on the research group
+            let message;
             if (researchName === 'CM') {
-                openingText.innerText = "This game is for the child to play. Please find a quiet place for the game to be played and do not assist or intervene while your child is playing. Once the game has begun it cannot be exited. Press Start when your child is ready to begin. Good Luck!";
+                openingText.innerHTML = "<u>This game is for your child to play</u>";
+                message = "Please find a quiet place for the game to be played and do not assist or intervene while your child is playing. Once the game has begun it cannot be exited. Press Start when your child is ready to begin.";
             } else {
-                openingText.innerText = "Press Start when you are ready to play. The game cannot be exited after beginning so please make sure you are ready before continuing.";
+                message = "Press Start when you are ready to play. The game cannot be exited after beginning so please make sure you are ready before continuing.";
             }
+            explanation.innerHTML = '';
+            explanation.appendChild(createParagraphsFromText(message));
 
             startButton.addEventListener('click', function() {
                 openingScreen.style.display = 'none';
