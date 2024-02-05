@@ -391,10 +391,6 @@ def update_teacher_email():
         return jsonify({'success': True})
     return jsonify({'success': False})
 
-@app.route('/free_exploration_game?Research=CM')
-def free_exploration_game():
-    return render_template('free_exploration_game.html')
-
 @app.route('/free_exploration_game')
 def free_exploration_game():
     research = request.args.get('Research', 'CM')
@@ -407,8 +403,6 @@ def update_child_game_completion():
     data = request.json
     child_id = data.get('childID')
     gameLogID = data.get('gameLogID')
-
-    # Update the first child's record with the gameLogID
     child_ref = db.collection('children').document(child_id)
     child_ref.update({'free_exploration_ID': gameLogID})
     
