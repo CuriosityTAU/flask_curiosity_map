@@ -384,7 +384,7 @@ def update_teacher_email():
         return jsonify({'success': True})
     return jsonify({'success': False})
 
-@app.route('/free_exploration_game')
+@app.route('/free_exploration_game?Research=CM')
 def free_exploration_game():
     return render_template('free_exploration_game.html')
 

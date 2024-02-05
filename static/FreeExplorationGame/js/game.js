@@ -26,6 +26,8 @@ var gameStartTimestamp = new Date().getTime(); // Timestamp when the game starts
 var firstInteractionTimestamp = null; // Timestamp of the first user interaction
 var totalListeningTime = 0; // Total time spent listening to audios
 var currentAudioStartTime = null; // Timestamp when the current audio starts
+var potentialDragStartLog = null; // Object to store the potential dragstart log data
+var dragStartPositions = {}; // Object to store the start positions of sprites
 var questionsOrder = []; 
 var correctAnswersCount = 0; //  tracking the number of correct answers 
 var audioCounts = {
@@ -39,8 +41,12 @@ var audioCounts = {
     'music': 0,
     'space': 0
 };
+
 var transitionMatrix = {};
 var lastCategoryHeard = null;
+var userLogs = [];
+var currentDraggedSprite = null;
+
 // initialize the transition matrix to 0's
 for (let category1 in gameData){
     transitionMatrix[category1] = {};
@@ -48,7 +54,8 @@ for (let category1 in gameData){
         transitionMatrix[category1][category2] = 0;
     }
 }
-var results= {}
+
+var userDocRef; // Global variable to store the user document reference
 
 function preload() {
     this.load.image('background', window.assetsBaseUrl + 'images/background_image.png');
@@ -61,7 +68,6 @@ function preload() {
         audioIndex[category] = 1;
     }
 }
-
 
 function create() {
     background = this.add.image(this.scale.width / 2, this.scale.height / 2, 'background').setOrigin(0.5, 0.5);
@@ -103,8 +109,50 @@ function create() {
         
         this.input.setDraggable(sprite);
         sprites[category] = sprite;
+        // Add pointer down event listener for logging
+        sprite.on('pointerdown', function(pointer) {
+            logUserAction('clicked', pointer.x, pointer.y, category);
+        });
         sprite.on('pointerdown', () => playAudioForCategory(this, category));
     }
+
+    // Add drag start and drag end event listeners for logging
+    this.input.on('dragstart', function(pointer, gameObject) {
+        // Create potential dragstart log data
+        var timestamp = (new Date().getTime() - gameStartTimestamp) / 1000;
+        potentialDragStartLog = {
+            action: 'dragstart',
+            timestamp: timestamp,
+            location: { x: pointer.x, y: pointer.y },
+            category: gameObject.name
+        };
+
+        // Store the starting position of the sprite
+        dragStartPositions[gameObject.name] = { x: gameObject.x, y: gameObject.y };
+        currentDraggedSprite = gameObject;
+    });
+
+    this.input.on('dragend', function(pointer, gameObject) {
+        // Calculate the distance moved
+        var startPos = dragStartPositions[gameObject.name];
+        var distanceMoved = Phaser.Math.Distance.Between(startPos.x, startPos.y, gameObject.x, gameObject.y);
+        var dragThreshold = 10;
+
+        // Check if the distance moved is greater than the threshold
+        if (distanceMoved > dragThreshold) {
+            // Log the potential dragstart and the dragend actions
+            if (potentialDragStartLog) {
+                userLogs.push(potentialDragStartLog);
+            }
+
+            var timestamp = (new Date().getTime() - gameStartTimestamp) / 1000;
+            logUserAction('dragend', pointer.x, pointer.y, gameObject.name, timestamp);
+        }
+
+        currentDraggedSprite = null;
+        potentialDragStartLog = null;
+        delete dragStartPositions[gameObject.name]; // Clear the stored position
+    });
 
     this.input.on('drag', function(pointer, gameObject, dragX, dragY) {
         var dx = gameObject.x - dragX;
@@ -186,6 +234,8 @@ function playAudioForCategory(scene, category) {
         });
     }
 
+    logUserAction('audiostart', null, null, category); // Log audio start
+
     let index = audioIndex[category];
     currentSound = scene.sound.add(`${category}_${index}`);
     currentSound.play();
@@ -197,6 +247,7 @@ function playAudioForCategory(scene, category) {
     sprite.anims.play(`${category}Anim`);
 
     currentSound.once('complete', function() {
+        logUserAction('audioend', null, null, category); // Log audio end
         sprite.anims.stop();
         sprite.setFrame(0); 
         currentSound = null;
@@ -299,29 +350,18 @@ function displayQuestion(index) {
                 // If there are more questions, go to the next one
                 displayQuestion(currentQuestionIndex);
             } else {
-                // If this is the last question, display the game finished message
-                testContainer.innerHTML = ''; // Clear the container
-                var finishedText = document.createElement('p');
-                finishedText.style.textAlign = 'center';
-                finishedText.style.fontWeight = 'bold';
-                finishedText.style.fontSize = '24px';
-                finishedText.textContent = "Game Finished.\nThank you for participating";
-                testContainer.appendChild(finishedText);
-                // Center the message in the container
-                testContainer.style.display = 'flex';
-                testContainer.style.flexDirection = 'column';
-                testContainer.style.justifyContent = 'center';
-                testContainer.style.alignItems = 'center'; // Ensure horizontal centering as well
-                console.log("number of correct answers:", correctAnswersCount," out of ",questionsOrder.length," questions")
+                // Create and append the user ID box and copy button
+                if (userDocRef) {
+                    displayGameOverMessage(userDocRef.id);
+                    // Prepare the questionnaire data to be updated
+                    var questionnaireData = {
+                        correctAnswers: correctAnswersCount,
+                        totalQuestions: questionsOrder.length
+                    };
 
-                 // Save the quiz results to Firestore
-                const db = window.getFirestore(window.app);
-                const GameMeasures = window.collection(db, 'gameMeasures');
-                results.correctAnswers = correctAnswersCount
-                results.totalQuestions = questionsOrder.length
-                window.addDoc(GameMeasures, results)
-                .then((docRef) => console.log("Quiz results saved to Firestore with ID: ", docRef.id))
-                .catch((error) => console.log("Firestore save failed: ", error.message));
+                    // Update the quiz results in Firestore
+                    updateUserDataWithQuestionnaire(questionnaireData);
+                }
             }
         }, 2000);
     });
@@ -330,6 +370,34 @@ function displayQuestion(index) {
     testContainer.style.display = 'block';
 }
 
+function updateUserDataWithQuestionnaire(questionnaireData) {
+    if (userDocRef) {
+        const db = window.getFirestore(window.app);
+        window.updateDoc(userDocRef, questionnaireData)
+            .then(() => console.log("Questionnaire data updated in Firestore"))
+            .catch((error) => console.log("Firestore update failed: ", error.message));
+    } else {
+        console.log("No user document reference found for updating questionnaire data.");
+    }
+}
+
+function logUserAction(actionName, x, y, category) {
+    var timestamp = (new Date().getTime() - gameStartTimestamp) / 1000;
+    var logEntry = {
+        action: actionName,
+        timestamp: timestamp,
+        location: x !== null && y !== null ? { x: x, y: y } : null,
+        category: category || null,
+        audio_playing: currentSound && currentSound.isPlaying ? currentDraggedSprite.name : false
+    };
+    userLogs.push(logEntry);
+}
+
+// Retrieve the name of the research so the users data will be saved to the appropriate DB table 
+function getResearchParameter() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('Research') || 'defaultResearch';
+}
 
 function gameOver() {
     // Stop all audio and animations
@@ -360,95 +428,170 @@ function gameOver() {
         currentSound.stop();
     }
 
-    // Calculate normalized listening time
-    var gameEndTime = new Date().getTime();
-    var playingTime = gameEndTime - (firstInteractionTimestamp || gameStartTimestamp);
-    var normalizedListeningTime = playingTime > 0 ? totalListeningTime / playingTime : 0;
-    console.log("Normalized Listening Time: " + normalizedListeningTime);
+    if (firstInteractionTimestamp === null) {
+        // User did not interact, display message with "XXXXXX"
+        displayGameOverMessage("XXXXXX");
+    } else {
+        // Calculate normalized listening time
+        var gameEndTime = new Date().getTime();
+        var playingTime = gameEndTime - (firstInteractionTimestamp || gameStartTimestamp);
+        var normalizedListeningTime = playingTime > 0 ? totalListeningTime / playingTime : 0;
+        console.log("Normalized Listening Time: " + normalizedListeningTime);
 
-     // Calculate hearing percentages and diversity entropy
-     var totalAudios = Object.values(audioCounts).reduce((a, b) => a + b, 0);
-     var h_m = 0;
-     var numCategoriesHeard = Object.values(audioCounts).filter(count => count > 0).length;
- 
-     for (let category in audioCounts) {
-         var p_i = totalAudios > 0 ? audioCounts[category] / totalAudios : 0;
-         if (p_i > 0) {
-             h_m += -p_i * Math.log2(p_i);
-         }
-     }
- 
-     // Calculate maximum diversity with discrete uniform distribution
-     var h_m_max = 0;
-     if (numCategoriesHeard > 0) {
-         var baseShare = Math.floor(totalAudios / numCategoriesHeard);
-         var extraAudios = totalAudios % numCategoriesHeard;
-         for (let i = 0; i < numCategoriesHeard; i++) {
-             var p_i_max = (i < extraAudios) ? (baseShare + 1) / totalAudios : baseShare / totalAudios;
-             h_m_max += -p_i_max * Math.log2(p_i_max);
-         }
-     }
- 
-     // Calculate normalized multi-disciplinary entropy
-     var normalizedEntropy = h_m_max > 0 ? h_m / h_m_max : 0;
-     console.log("Normalized Multi-Disciplinary Entropy: " + normalizedEntropy);
-
-    // Calculate the normalized transition probability matrix (P)
-    var totalTransitions = 0;
-    for (let category1 in transitionMatrix) {
-        for (let category2 in transitionMatrix[category1]) {
-            totalTransitions += transitionMatrix[category1][category2];
-        }
-    }
-
-    var transitionProbabilityMatrix = {};
-    for (let category1 in transitionMatrix) {
-        transitionProbabilityMatrix[category1] = {};
-        for (let category2 in transitionMatrix[category1]) {
-            transitionProbabilityMatrix[category1][category2] = totalTransitions > 0 ? transitionMatrix[category1][category2] / totalTransitions : 0;
-        }
-    }
-
-    // Compute the transition entropy (H_t)
-    var H_t = 0;
-    for (let category1 in transitionProbabilityMatrix) {
-        for (let category2 in transitionProbabilityMatrix[category1]) {
-            let p_ij = transitionProbabilityMatrix[category1][category2];
-            if (p_ij > 0) {
-                H_t += -p_ij * Math.log2(p_ij);
+        // Calculate hearing percentages and diversity entropy
+        var totalAudios = Object.values(audioCounts).reduce((a, b) => a + b, 0);
+        var h_m = 0;
+        var numCategoriesHeard = Object.values(audioCounts).filter(count => count > 0).length;
+    
+        for (let category in audioCounts) {
+            var p_i = totalAudios > 0 ? audioCounts[category] / totalAudios : 0;
+            if (p_i > 0) {
+                h_m += -p_i * Math.log2(p_i);
             }
         }
-    }
-
-    // Calculate the maximum transition entropy (H_t_max)
-    var H_t_max = 0;
-    if (numCategoriesHeard > 0) {
-        // The possible transitions is a matrix of all the categories heard minus the diagonal (i->i). 
-        // for example: if 3 categories were heard then there are 3^2-3=6 possible transitions: 1-2, 1-3, 2-1, 2-3, 3-1,3-2
-        var possibleTransitions= numCategoriesHeard**2 - numCategoriesHeard;
-        if (possibleTransitions > totalTransitions){
-            H_t_max= -Math.log2(1/totalTransitions);
-        }
-        else{
-            var baseShare = Math.floor(totalTransitions / possibleTransitions);
-            var extraTransitions = totalTransitions % possibleTransitions;
-            for (let i = 0; i < possibleTransitions; i++) {
-                var p_i_j_max = (i < extraTransitions) ? (baseShare + 1) / totalTransitions : baseShare / totalTransitions;
-                h_m_max += -p_i_j_max * Math.log2(p_i_j_max);
+    
+        // Calculate maximum diversity with discrete uniform distribution
+        var h_m_max = 0;
+        if (numCategoriesHeard > 0) {
+            var baseShare = Math.floor(totalAudios / numCategoriesHeard);
+            var extraAudios = totalAudios % numCategoriesHeard;
+            for (let i = 0; i < numCategoriesHeard; i++) {
+                var p_i_max = (i < extraAudios) ? (baseShare + 1) / totalAudios : baseShare / totalAudios;
+                h_m_max += -p_i_max * Math.log2(p_i_max);
             }
         }
+    
+        // Calculate normalized multi-disciplinary entropy
+        var normalizedEntropy = h_m_max > 0 ? h_m / h_m_max : 0;
+        console.log("Normalized Multi-Disciplinary Entropy: " + normalizedEntropy);
+
+        // Calculate the normalized transition probability matrix (P)
+        var totalTransitions = 0;
+        for (let category1 in transitionMatrix) {
+            for (let category2 in transitionMatrix[category1]) {
+                totalTransitions += transitionMatrix[category1][category2];
+            }
+        }
+
+        var transitionProbabilityMatrix = {};
+        for (let category1 in transitionMatrix) {
+            transitionProbabilityMatrix[category1] = {};
+            for (let category2 in transitionMatrix[category1]) {
+                transitionProbabilityMatrix[category1][category2] = totalTransitions > 0 ? transitionMatrix[category1][category2] / totalTransitions : 0;
+            }
+        }
+
+        // Compute the transition entropy (H_t)
+        var H_t = 0;
+        for (let category1 in transitionProbabilityMatrix) {
+            for (let category2 in transitionProbabilityMatrix[category1]) {
+                let p_ij = transitionProbabilityMatrix[category1][category2];
+                if (p_ij > 0) {
+                    H_t += -p_ij * Math.log2(p_ij);
+                }
+            }
+        }
+
+        // Calculate the maximum transition entropy (H_t_max)
+        var H_t_max = 0;
+        if (numCategoriesHeard > 0) {
+            // The possible transitions is a matrix of all the categories heard minus the diagonal (i->i). 
+            // for example: if 3 categories were heard then there are 3^2-3=6 possible transitions: 1-2, 1-3, 2-1, 2-3, 3-1,3-2
+            var possibleTransitions= numCategoriesHeard**2 - numCategoriesHeard;
+            if (possibleTransitions > totalTransitions){
+                H_t_max= -Math.log2(1/totalTransitions);
+            }
+            else{
+                var baseShare = Math.floor(totalTransitions / possibleTransitions);
+                var extraTransitions = totalTransitions % possibleTransitions;
+                for (let i = 0; i < possibleTransitions; i++) {
+                    var p_i_j_max = (i < extraTransitions) ? (baseShare + 1) / totalTransitions : baseShare / totalTransitions;
+                    h_m_max += -p_i_j_max * Math.log2(p_i_j_max);
+                }
+            }
+        }
+
+        // Step 5: Calculate and print the normalized transition entropy
+        var normalizedTransitionEntropy = H_t_max > 0 ? H_t / H_t_max : 0;
+        console.log("Normalized Transition Entropy: " + normalizedTransitionEntropy);
+
+        // Prepare the game data to be saved
+        var gameData = {
+            LT_1: normalizedListeningTime,
+            MDE_2: normalizedEntropy,
+            TE_3: normalizedTransitionEntropy,
+            logs: userLogs,
+            timestamp: window.serverTimestamp()
+        };
+        
+        saveGameDataToFirebase(gameData); 
+        displayTest();
     }
+}
 
-    // Step 5: Calculate and print the normalized transition entropy
-    var normalizedTransitionEntropy = H_t_max > 0 ? H_t / H_t_max : 0;
-    console.log("Normalized Transition Entropy: " + normalizedTransitionEntropy);
 
-    // Prepare the data to be saved
-    results.LT_1 = normalizedListeningTime
-    results.MDE_2= normalizedEntropy
-    results.TE_3= normalizedTransitionEntropy
-    results.timestamp= window.serverTimestamp()
+function saveGameDataToFirebase(gameData) {
+    const researchName = getResearchParameter();
+    const db = window.getFirestore(window.app);
+    const UserTable = window.collection(db, researchName);
+    window.addDoc(UserTable, gameData)
+        .then((docRef) => {
+            console.log("Game data saved to Firestore with ID: ", docRef.id);
+            userDocRef = docRef; // Store the document reference for later use
+        })
+        .catch((error) => console.log("Firestore save failed: ", error.message));
+}
 
-    // Call displayTest to show the questionnaire
-    displayTest();
+function createCopyIDBox(userDocRef) {
+    var idContainer = document.createElement('div');
+    idContainer.style.display = 'flex';
+    idContainer.style.alignItems = 'center';
+    idContainer.style.justifyContent = 'center';
+    idContainer.style.marginTop = '20px';
+
+    var idBox = document.createElement('input');
+    idBox.type = 'text';
+    idBox.value = userDocRef.id;
+    idBox.readOnly = true;
+    idBox.style.padding = '10px';
+    idBox.style.marginRight = '10px';
+    idBox.style.width = '200px';
+
+    var copyButton = document.createElement('button');
+    copyButton.textContent = 'Copy';
+    copyButton.style.backgroundColor = 'purple'; // Set button color to purple
+    copyButton.style.color = 'white'; // Set text color to white for better visibility
+    copyButton.style.padding = '10px 20px';
+    copyButton.style.border = 'none';
+    copyButton.style.borderRadius = '5px';
+    copyButton.style.cursor = 'pointer';
+    copyButton.onclick = function() {
+        idBox.select();
+        document.execCommand('copy');
+    };
+
+    idContainer.appendChild(idBox);
+    idContainer.appendChild(copyButton);
+
+    return idContainer;
+}
+
+function displayGameOverMessage(userId) {
+    var testContainer = document.getElementById('testContainer');
+    testContainer.innerHTML = ''; // Clear the container
+    var finishedText = document.createElement('p');
+    finishedText.style.textAlign = 'center';
+    finishedText.style.fontWeight = 'bold';
+    finishedText.style.fontSize = '24px';
+    finishedText.textContent = "Game Over. \nPlease copy the ID below and paste it into the qualtrics survey";
+    testContainer.appendChild(finishedText);
+
+    var idBoxContainer = createCopyIDBox({ id: userId });
+    testContainer.appendChild(idBoxContainer);
+
+    // Center the message in the container
+    testContainer.style.display = 'flex';
+    testContainer.style.flexDirection = 'column';
+    testContainer.style.justifyContent = 'center';
+    testContainer.style.alignItems = 'center';
 }

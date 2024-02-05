@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Phaser Game</title>
+    <title>Free Exploration Game</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
     <style>
         #testContainer {
@@ -59,7 +59,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, updateDoc} from "https://www.gstatic.com/firebasejs/10.7.2/firebase-firestore.js";
     
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -81,6 +81,8 @@
         window.collection = collection;
         window.addDoc = addDoc;
         window.serverTimestamp = serverTimestamp;
+        window.updateDoc= updateDoc;
+
     </script>
     <script type="text/javascript">
         window.assetsBaseUrl = "{{ url_for('static', filename='FreeExplorationGame/assets/') }}";
