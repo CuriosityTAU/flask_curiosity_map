@@ -350,17 +350,24 @@ function displayQuestion(index) {
                 // If there are more questions, go to the next one
                 displayQuestion(currentQuestionIndex);
             } else {
-                // Create and append the user ID box and copy button
+
                 if (userDocRef) {
-                    displayGameOverMessage(userDocRef.id);
-                    // Prepare the questionnaire data to be updated
+
+                    // Update the quiz results in Firestore
                     var questionnaireData = {
                         correctAnswers: correctAnswersCount,
                         totalQuestions: questionsOrder.length
                     };
-
-                    // Update the quiz results in Firestore
                     updateUserDataWithQuestionnaire(questionnaireData);
+
+                    const research = getResearchParameter();
+                    if (research== 'CM'){
+                        sendGameCompletionToServer()
+                    }
+                    else {
+                        // any other research should be routed to end game page with option to copy UUID
+                        displayGameOverMessage(userDocRef.id);
+                    }
                 }
             }
         }, 2000);
@@ -393,12 +400,6 @@ function logUserAction(actionName, x, y, category) {
     userLogs.push(logEntry);
 }
 
-// Retrieve the name of the research so the users data will be saved to the appropriate DB table 
-function getResearchParameter() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('Research') || 'defaultResearch';
-}
-
 function gameOver() {
     // Stop all audio and animations
     if (currentSound && currentSound.isPlaying) {
@@ -429,8 +430,15 @@ function gameOver() {
     }
 
     if (firstInteractionTimestamp === null) {
-        // User did not interact, display message with "XXXXXX"
-        displayGameOverMessage("XXXXXX");
+        const research = getResearchParameter();
+        if (research== 'CM'){
+            sendGameCompletionToServer()
+        }
+        else {
+            // User did not interact, display message with "XXXXXX"
+            displayGameOverMessage("XXXXXX");
+        }
+        
     } else {
         // Calculate normalized listening time
         var gameEndTime = new Date().getTime();
@@ -529,6 +537,10 @@ function gameOver() {
     }
 }
 
+// find the research name (CuriosityMAP= CM, any other research name will be in the URL as a parameter)
+function getResearchParameter() {
+    return window.researchName || 'defaultResearch';
+}
 
 function saveGameDataToFirebase(gameData) {
     const researchName = getResearchParameter();
@@ -595,3 +607,27 @@ function displayGameOverMessage(userId) {
     testContainer.style.justifyContent = 'center';
     testContainer.style.alignItems = 'center';
 }
+
+function sendGameCompletionToServer() {
+    fetch('/update_child_game_completion', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            // send the log ID from free_exploration_game DB ad the child id of the child playing 
+            gameLogID: userDocRef.id,
+            childID: window.childId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+        window.location.href = "/parents_homepage"; // Redirect after successful update
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
+
+

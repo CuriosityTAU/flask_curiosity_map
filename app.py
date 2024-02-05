@@ -294,9 +294,12 @@ def parents_homepage():
     # Check if self questionnaire has been filled
     self_questionnaire_filled = 'responseId' in parent_data
 
-    # Check if children questionnaire has been filled
+    child_id_for_game= None ## Temporary child_id retrieval for single child instances. UPDATE for 2 children 
+
+    # Check if children questionnaire has been filled and games have been played 
     children_status = []
     for child_id in parent_data.get('children', []):
+        child_id_for_game= child_id
         child_ref = db.collection('children').document(child_id)
         child_doc = child_ref.get()
         child_data = child_doc.to_dict()
@@ -304,13 +307,17 @@ def parents_homepage():
             'id': child_id,
             'completed': 'p_responseId' in child_data
         })
+        game_complete= 'free_exploration_ID' in child_data
     all_children_questionnaires_filled = all('p_responseId' in db.collection('children').document(child_id).get().to_dict() for child_id in parent_data.get('children', []))
     print('loading parents page. Is there self_q? ', self_questionnaire_filled, 'are there all children qs?', all_children_questionnaires_filled)
     print('child_qs status: ', children_status)
+    
     return render_template('parents_homepage.html',
                            self_questionnaire_filled=self_questionnaire_filled,
                            all_children_questionnaires_filled= all_children_questionnaires_filled,
-                           children_status=children_status)
+                           children_status=children_status,
+                           child_id_for_game= child_id_for_game,
+                           game_complete= game_complete)
 
 # function that retrieves the parents children from DB for homepage
 @app.route('/get_children_names')
@@ -388,6 +395,24 @@ def update_teacher_email():
 def free_exploration_game():
     return render_template('free_exploration_game.html')
 
+@app.route('/free_exploration_game')
+def free_exploration_game():
+    research = request.args.get('Research', 'CM')
+    child_id = request.args.get('child_id', None)  # Get child_id from query parameters
+    return render_template('free_exploration_game.html', research=research, child_id=child_id)
+
+# function that takes the game ID log and saved it to the childs document in DB
+@app.route('/update_child_game_completion', methods=['POST'])
+def update_child_game_completion():
+    data = request.json
+    child_id = data.get('childID')
+    gameLogID = data.get('gameLogID')
+
+    # Update the first child's record with the gameLogID
+    child_ref = db.collection('children').document(child_id)
+    child_ref.update({'free_exploration_ID': gameLogID})
+    
+    return jsonify({"success": True})
 
 # Handle uncaught exceptions
 @app.errorhandler(Exception)
