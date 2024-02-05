@@ -113,8 +113,7 @@
       </div>
 
       <div class="w-layout-blockcontainer game-buttons w-container">
-        <a href="{{ url_for('free_exploration_game', child_id=child_id_for_game) }}" class="button w-button">Game 1</a>
-        <a href="{{ url_for('free_exploration_game', child_id=first_child_id) }}" class="button w-button {{ 'disabled' if game_complete else '' }}">
+        <a href="{{ url_for('free_exploration_game', child_id=child_id_for_game) }}" class="button w-button {{ 'disabled' if game_complete else '' }}">
           Game 1
           {% if game_complete %}
               <span class="checkmark-container">

@@ -14,7 +14,12 @@ var config = {
     }
 };
 
-var game = new Phaser.Game(config);
+var game; 
+window.startPhaserGame = function() {
+    game = new Phaser.Game(config);
+};
+
+// var game = new Phaser.Game(config);
 var audioIndex = {};
 var sprites = {};
 var background;
